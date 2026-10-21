@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fails when line coverage in an lcov file is below a minimum percentage.
+# Generated files (*.g.dart) are left out of the count.
 # Usage: tool/check_coverage.sh <lcov.info> <minimum-percent>
 set -euo pipefail
 
@@ -7,7 +8,8 @@ file="$1"
 minimum="$2"
 
 read -r hit found < <(awk -F'[:,]' '
-  /^DA:/ { found++; if ($3 > 0) hit++ }
+  /^SF:/ { generated = ($0 ~ /\.g\.dart$/) }
+  /^DA:/ && !generated { found++; if ($3 > 0) hit++ }
   END { print hit + 0, found + 0 }
 ' "$file")
 

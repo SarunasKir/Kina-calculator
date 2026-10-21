@@ -1,0 +1,4 @@
+[
+  {"timestamp": "2026-10-01T10:00:00+02:00", "currency": "EUR", "eur_rate": 1, "fx_source": "Saved manual rates", "fx_date": "", "millions": 300, "names": ["Seller A", "Seller B", "Seller C"], "all_in_eur": [1.2756, 1.9134, 2.5512, 3.1875]},
+  {"timestamp": "2026-10-08T10:00:00+02:00", "currency": "USD", "eur_rate": 1.0823, "fx_source": "ECB via Frankfurter", "fx_date": "2026-10-07", "millions": 300, "names": ["Seller A", "Seller B", "Seller C"], "all_in_eur": [1.2, 1.8, 2.4, 0]}
+]

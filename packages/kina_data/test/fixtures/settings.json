@@ -1,0 +1,19 @@
+{
+  "Amount": "150",
+  "Price": "1.25",
+  "Vat": "21",
+  "QunaPack": "4000",
+  "PackEuro": "51",
+  "TradeQuna": "600",
+  "TradeKina": "2",
+  "Payment": 3,
+  "FeePercent": ["3.9", "3.9", "3.9", "4.4", "5.9", "5.9", "5.9", ""],
+  "FeeFixed": ["0.99", "0.99", "0.99", "0.35", "0", "0", "0", ""],
+  "SellerNames": ["Alpha", "Beta", "Gamma"],
+  "SellerPrices": ["1.10", "1.40", "1.90"],
+  "Currency": 1,
+  "FXTarget": 2,
+  "FX": [1, 1.0823, 0.8412, 1.5, 1.66],
+  "SyncDate": "2026-10-17",
+  "RateMode": "ECB via Frankfurter"
+}
