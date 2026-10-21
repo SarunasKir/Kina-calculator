@@ -112,15 +112,40 @@ class JournalEntries extends Table with SyncColumns {
   TextColumn get fxRatePerEur => text().map(const DecimalConverter())();
 }
 
+/// Values that belong to this device only and are never synced, such as
+/// pairing keys.
+@DataClassName('LocalValueRow')
+class LocalValues extends Table {
+  /// The value's name.
+  TextColumn get key => text()();
+
+  /// The value, usually JSON.
+  TextColumn get value => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {key};
+}
+
 // coverage:ignore-end
 
 /// The app's local SQLite database.
-@DriftDatabase(tables: [SettingsTable, Profiles, Snapshots, JournalEntries])
+@DriftDatabase(
+  tables: [SettingsTable, Profiles, Snapshots, JournalEntries, LocalValues],
+)
 class KinaDatabase extends _$KinaDatabase {
   /// Opens the database on [e]. Use `NativeDatabase.memory()` in tests
   /// and `drift_flutter` in the app.
   KinaDatabase(super.e);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(localValues);
+      }
+    },
+  );
 }

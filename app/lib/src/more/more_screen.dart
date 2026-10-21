@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kina_app/src/files/file_access.dart';
 import 'package:kina_app/src/help/help.dart';
 import 'package:kina_app/src/providers.dart';
+import 'package:kina_app/src/sync/sync_card.dart';
 import 'package:kina_app/src/widgets/section_card.dart';
 import 'package:kina_data/kina_data.dart';
 
@@ -94,6 +95,8 @@ class MoreScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            const SyncCard(),
+            const SizedBox(height: 16),
             SectionCard(
               title: 'Help',
               children: [

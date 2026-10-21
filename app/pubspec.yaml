@@ -24,7 +24,10 @@ dependencies:
     path: ../packages/kina_core
   kina_data:
     path: ../packages/kina_data
+  kina_sync:
+    path: ../packages/kina_sync
   meta: ^1.16.0
+  qr_flutter: ^4.1.0
   url_launcher: ^6.3.3
   uuid: ^4.6.0
 

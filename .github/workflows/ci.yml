@@ -33,6 +33,9 @@ jobs:
       - name: Test kina_data
         working-directory: packages/kina_data
         run: dart pub global run coverage:test_with_coverage
+      - name: Test kina_sync
+        working-directory: packages/kina_sync
+        run: dart pub global run coverage:test_with_coverage
       - name: Test app
         working-directory: app
         run: flutter test --exclude-tags golden --coverage
@@ -43,6 +46,7 @@ jobs:
         run: |
           tool/check_coverage.sh packages/kina_core/coverage/lcov.info 100
           tool/check_coverage.sh packages/kina_data/coverage/lcov.info 100
+          tool/check_coverage.sh packages/kina_sync/coverage/lcov.info 100
           tool/check_coverage.sh app/coverage/lcov.info 95
       - name: Upload golden failures
         if: failure()
