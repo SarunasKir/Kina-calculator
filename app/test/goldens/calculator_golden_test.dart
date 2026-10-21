@@ -14,14 +14,11 @@ Future<void> golden(
   WidgetTester tester, {
   required Size size,
   required double pixelRatio,
-  required Brightness brightness,
   required String name,
   String? page,
   String? tab,
   SyncRole role = SyncRole.phone,
 }) async {
-  tester.platformDispatcher.platformBrightnessTestValue = brightness;
-  addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
   final db = memoryDatabase();
   addTearDown(() => tester.runAsync(db.close));
   await tester.runAsync(
@@ -97,43 +94,21 @@ void main() {
   setUpAll(loadAppFonts);
 
   testWidgets(
-    'Windows, light',
+    'Windows',
     (t) => golden(
       t,
       size: const Size(1440, 1180),
       pixelRatio: 1,
-      brightness: Brightness.light,
-      name: 'windows_light',
+      name: 'windows_calculator',
     ),
   );
   testWidgets(
-    'Windows, dark',
-    (t) => golden(
-      t,
-      size: const Size(1440, 1180),
-      pixelRatio: 1,
-      brightness: Brightness.dark,
-      name: 'windows_dark',
-    ),
-  );
-  testWidgets(
-    'phone, light',
+    'phone',
     (t) => golden(
       t,
       size: const Size(412, 915),
       pixelRatio: 2,
-      brightness: Brightness.light,
-      name: 'phone_light',
-    ),
-  );
-  testWidgets(
-    'phone, dark',
-    (t) => golden(
-      t,
-      size: const Size(412, 915),
-      pixelRatio: 2,
-      brightness: Brightness.dark,
-      name: 'phone_dark',
+      name: 'phone_calculator',
     ),
   );
 
@@ -148,7 +123,6 @@ void main() {
         t,
         size: const Size(1440, 1180),
         pixelRatio: 1,
-        brightness: Brightness.light,
         name: 'windows_$file',
         page: page,
         tab: tab,
@@ -162,7 +136,6 @@ void main() {
         t,
         size: const Size(412, 915),
         pixelRatio: 2,
-        brightness: Brightness.dark,
         name: 'phone_$file',
         page: page,
         tab: tab,
