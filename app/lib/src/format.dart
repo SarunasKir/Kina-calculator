@@ -1,4 +1,5 @@
 import 'package:decimal/decimal.dart';
+import 'package:intl/intl.dart';
 
 /// Symbols for the currencies the app knows; others show their code.
 const currencySymbols = {
@@ -47,3 +48,13 @@ String formatInput(Decimal value, {int scale = 6}) {
       ? trimmed.substring(0, trimmed.length - 1)
       : trimmed;
 }
+
+final _grouped = NumberFormat('#,##0', 'en_US');
+final _dateTime = DateFormat('yyyy-MM-dd HH:mm');
+
+/// Formats raw Kina with thousands separators, such as `25,000,000 Kina`.
+String formatKina(Decimal value) =>
+    '${_grouped.format(value.round().toBigInt().toInt())} Kina';
+
+/// Formats a local date and time, such as `2026-10-21 10:15`.
+String formatDateTime(DateTime value) => _dateTime.format(value.toLocal());

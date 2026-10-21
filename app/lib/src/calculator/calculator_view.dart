@@ -92,3 +92,13 @@ class CalculatorView {
         : '$total · Extra ${money(-diff)}';
   }
 }
+
+/// The rate source line under the currency fields.
+String rateStatus(CalculatorSettings s) => switch (s.rateSource) {
+  RateSource.ecb => 'ECB via Frankfurter · published ${s.rateDate ?? '?'}',
+  RateSource.manual =>
+    s.rateDate == null
+        ? 'Manual rate'
+        : 'Manual rate · last sync ${s.rateDate}',
+  RateSource.saved => 'Saved rates · internet needed to sync',
+};

@@ -2,24 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:kina_app/src/calculator/calculator_screen.dart';
+import 'package:kina_app/src/calculator/calculator_view.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
 import 'package:kina_data/kina_data.dart';
 
 import '../helpers.dart';
-
-String textOf(WidgetTester tester, Key key) {
-  final widget = tester.widget(find.byKey(key));
-  if (widget is Text) {
-    return widget.data!;
-  }
-  return tester
-      .widgetList<Text>(
-        find.descendant(of: find.byKey(key), matching: find.byType(Text)),
-      )
-      .map((t) => t.data)
-      .join(' ');
-}
 
 Future<void> enter(WidgetTester tester, Key key, String text) async {
   await tester.enterText(
@@ -201,5 +188,28 @@ void main() {
       ),
       'ECB via Frankfurter · published ?',
     );
+  });
+
+  testWidgets('VAT and fee fields open their help guides', (tester) async {
+    await pumpApp(tester, db);
+    await tester.tap(find.byTooltip('About VAT'));
+    await tester.pumpAndSettle();
+    expect(find.text('Understanding VAT'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('closeHelp')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('About Payment fee'));
+    await tester.pumpAndSettle();
+    expect(find.text('Payment processing fees'), findsOneWidget);
+  });
+
+  testWidgets('exports the calculation to CSV', (tester) async {
+    final files = FakeFileAccess();
+    await pumpApp(tester, db, files: files);
+    await tester.tap(find.byKey(const Key('exportCalculation')));
+    await settle(tester);
+    expect(files.saved.keys.single, startsWith('kina_comparison_'));
+    expect(files.saved.values.single, contains('RMT total,385.80'));
+    expect(find.textContaining('CSV saved'), findsOneWidget);
   });
 }

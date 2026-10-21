@@ -16,6 +16,8 @@ Decimal roundCents(Rational value) =>
 Decimal nonNegative(Decimal value) =>
     value < Decimal.zero ? Decimal.zero : value;
 
-/// Converts an exact [Rational] to a [Decimal] with at most [scale] digits.
-Decimal toScale(Rational value, int scale) =>
-    value.toDecimal(scaleOnInfinitePrecision: scale).round(scale: scale);
+/// Rounds an exact [Rational] to a [Decimal] with at most [scale] decimal
+/// places, half away from zero.
+Decimal toScale(Rational value, int scale) => Decimal.fromBigInt(
+  (value * Rational(BigInt.from(10).pow(scale))).round(),
+).shift(-scale);
