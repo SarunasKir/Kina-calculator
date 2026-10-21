@@ -33,7 +33,63 @@ jobs:
       - name: Test kina_data
         working-directory: packages/kina_data
         run: dart pub global run coverage:test_with_coverage
-      - name: Require 100% line coverage
+      - name: Test app
+        working-directory: app
+        run: flutter test --exclude-tags golden --coverage
+      - name: Compare screen images
+        working-directory: app
+        run: flutter test --tags golden
+      - name: Check line coverage
         run: |
           tool/check_coverage.sh packages/kina_core/coverage/lcov.info 100
           tool/check_coverage.sh packages/kina_data/coverage/lcov.info 100
+          tool/check_coverage.sh app/coverage/lcov.info 95
+      - name: Upload golden failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: app/test/goldens/failures/
+          if-no-files-found: ignore
+
+  build-android:
+    name: Build Android APK
+    needs: core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+      - name: Build
+        working-directory: app
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kina-calculator-android
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+
+  build-windows:
+    name: Build Windows app
+    needs: core
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+      - name: Build
+        working-directory: app
+        run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kina-calculator-windows
+          path: app/build/windows/x64/runner/Release/

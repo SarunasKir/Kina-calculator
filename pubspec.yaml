@@ -7,6 +7,7 @@ environment:
 workspace:
   - packages/kina_core
   - packages/kina_data
+  - app
 
 dev_dependencies:
   very_good_analysis: ^11.0.0

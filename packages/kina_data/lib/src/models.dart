@@ -242,6 +242,50 @@ class CalculatorSettings {
   /// ECB publication date, or last sync date, if any.
   final String? rateDate;
 
+  /// Returns a copy with the given fields replaced. Pass [clearRateDate] to
+  /// remove the rate date.
+  CalculatorSettings copyWith({
+    String? amountMillions,
+    String? pricePerMillion,
+    String? vatPercent,
+    String? qunaPerPack,
+    String? packPrice,
+    String? qunaPerChest,
+    String? millionsPerChest,
+    List<PaymentMethod>? paymentMethods,
+    int? selectedPayment,
+    List<Seller>? sellers,
+    String? currency,
+    String? targetCurrency,
+    Map<String, Decimal>? ratesPerEur,
+    RateSource? rateSource,
+    String? rateDate,
+    bool clearRateDate = false,
+  }) => CalculatorSettings(
+    amountMillions: amountMillions ?? this.amountMillions,
+    pricePerMillion: pricePerMillion ?? this.pricePerMillion,
+    vatPercent: vatPercent ?? this.vatPercent,
+    qunaPerPack: qunaPerPack ?? this.qunaPerPack,
+    packPrice: packPrice ?? this.packPrice,
+    qunaPerChest: qunaPerChest ?? this.qunaPerChest,
+    millionsPerChest: millionsPerChest ?? this.millionsPerChest,
+    paymentMethods: paymentMethods ?? this.paymentMethods,
+    selectedPayment: selectedPayment ?? this.selectedPayment,
+    sellers: sellers ?? this.sellers,
+    currency: currency ?? this.currency,
+    targetCurrency: targetCurrency ?? this.targetCurrency,
+    ratesPerEur: ratesPerEur ?? this.ratesPerEur,
+    rateSource: rateSource ?? this.rateSource,
+    rateDate: clearRateDate ? null : rateDate ?? this.rateDate,
+  );
+
+  /// The selected payment method, or the first one if the index is stale.
+  PaymentMethod get payment =>
+      paymentMethods[selectedPayment >= 0 &&
+              selectedPayment < paymentMethods.length
+          ? selectedPayment
+          : 0];
+
   /// Converts to JSON.
   Map<String, Object?> toJson() => {
     'amountMillions': amountMillions,

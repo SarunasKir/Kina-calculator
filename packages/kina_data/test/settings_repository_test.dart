@@ -88,4 +88,52 @@ void main() {
     const s = Seller(name: 'S', pricePerMillion: '1');
     expect(s.hashCode, Seller.fromJson(s.toJson()).hashCode);
   });
+
+  test('copyWith replaces only the given fields', () {
+    final d = CalculatorSettings.defaults;
+    final c = d.copyWith(
+      amountMillions: '1',
+      pricePerMillion: '2',
+      vatPercent: '3',
+      qunaPerPack: '4',
+      packPrice: '5',
+      qunaPerChest: '6',
+      millionsPerChest: '7',
+      paymentMethods: [d.paymentMethods.last],
+      selectedPayment: 0,
+      sellers: const [],
+      currency: 'GBP',
+      targetCurrency: 'EUR',
+      ratesPerEur: {'EUR': Decimal.one},
+      rateSource: RateSource.manual,
+      rateDate: '2026-10-21',
+    );
+    expect(c.toJson(), {
+      ...d.toJson(),
+      'amountMillions': '1',
+      'pricePerMillion': '2',
+      'vatPercent': '3',
+      'qunaPerPack': '4',
+      'packPrice': '5',
+      'qunaPerChest': '6',
+      'millionsPerChest': '7',
+      'paymentMethods': [d.paymentMethods.last.toJson()],
+      'selectedPayment': 0,
+      'sellers': <Object?>[],
+      'currency': 'GBP',
+      'targetCurrency': 'EUR',
+      'ratesPerEur': {'EUR': '1'},
+      'rateSource': 'manual',
+      'rateDate': '2026-10-21',
+    });
+    expect(c.copyWith().toJson(), c.toJson());
+    expect(c.copyWith(clearRateDate: true).rateDate, isNull);
+  });
+
+  test('payment falls back to the first method for a stale index', () {
+    final d = CalculatorSettings.defaults;
+    expect(d.copyWith(selectedPayment: 3).payment.name, 'PayPal');
+    expect(d.copyWith(selectedPayment: 99).payment.name, 'Visa / Mastercard');
+    expect(d.copyWith(selectedPayment: -1).payment.name, 'Visa / Mastercard');
+  });
 }
