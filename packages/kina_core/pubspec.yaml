@@ -1,0 +1,16 @@
+name: kina_core
+description: Platform-independent Kina calculator maths, ported from v55.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  decimal: ^3.2.6
+  meta: ^1.16.0
+  rational: ^2.2.3
+
+dev_dependencies:
+  test: ^1.33.0
+  very_good_analysis: ^11.0.0
