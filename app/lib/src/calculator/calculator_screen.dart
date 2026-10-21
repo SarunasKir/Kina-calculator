@@ -142,20 +142,24 @@ class _Inputs extends ConsumerWidget {
                 onChanged: (v) => edit((s) => s.copyWith(pricePerMillion: v)),
               ),
             ),
-            DropdownButtonFormField<int>(
-              key: const Key('payment'),
-              initialValue: s.selectedPayment,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Payment method'),
-              items: [
-                for (var i = 0; i < s.paymentMethods.length; i++)
-                  DropdownMenuItem(
-                    value: i,
-                    child: Text(s.paymentMethods[i].name),
-                  ),
-              ],
-              onChanged: (i) => edit((s) => s.copyWith(selectedPayment: i)),
+            KeyedSubtree(
+              key: ValueKey('payment-${s.selectedPayment}-${s.paymentMethods}'),
+              child: DropdownButtonFormField<int>(
+                key: const Key('payment'),
+                initialValue: s.selectedPayment,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Payment method'),
+                items: [
+                  for (var i = 0; i < s.paymentMethods.length; i++)
+                    DropdownMenuItem(
+                      value: i,
+                      child: Text(s.paymentMethods[i].name),
+                    ),
+                ],
+                onChanged: (i) => edit((s) => s.copyWith(selectedPayment: i)),
+              ),
             ),
+            _PaymentActions(settings: s),
             FieldPair(
               first: SyncedTextField(
                 key: const Key('feePercent'),
@@ -228,6 +232,20 @@ class _Inputs extends ConsumerWidget {
           children: [
             for (var i = 0; i < view.sellers.length; i++)
               _SellerRow(index: i, view: view, symbol: symbol),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('addSeller'),
+                onPressed: s.sellers.length >= CalculatorSettings.maxSellers
+                    ? null
+                    : () => edit(addSeller),
+                icon: const Icon(Icons.add),
+                label: Text(
+                  'Add seller (${s.sellers.length} of '
+                  '${CalculatorSettings.maxSellers})',
+                ),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -241,9 +259,107 @@ class _Inputs extends ConsumerWidget {
     PaymentMethod method,
   ) {
     final methods = [...s.paymentMethods];
-    methods[methods.indexOf(s.payment)] = method;
+    methods[selectedIndex(s)] = method;
     return s.copyWith(paymentMethods: methods);
   }
+}
+
+/// Buttons to rename, add and remove payment methods.
+class _PaymentActions extends ConsumerWidget {
+  const _PaymentActions({required this.settings});
+
+  final CalculatorSettings settings;
+
+  Future<String?> _askName(BuildContext context, {String initial = ''}) =>
+      showDialog<String>(
+        context: context,
+        builder: (_) => _NameDialog(initial: initial),
+      );
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(settingsProvider.notifier);
+    final s = settings;
+    return Wrap(
+      spacing: 8,
+      children: [
+        TextButton.icon(
+          key: const Key('addPayment'),
+          onPressed: () async {
+            final name = await _askName(context);
+            if (name != null) {
+              await controller.edit((s) => addPaymentMethod(s, name));
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Add method'),
+        ),
+        TextButton.icon(
+          key: const Key('renamePayment'),
+          onPressed: () async {
+            final name = await _askName(context, initial: s.payment.name);
+            if (name != null) {
+              await controller.edit((s) => renamePaymentMethod(s, name));
+            }
+          },
+          icon: const Icon(Icons.edit_outlined),
+          label: const Text('Rename'),
+        ),
+        TextButton.icon(
+          key: const Key('removePayment'),
+          onPressed: s.paymentMethods.length <= 1
+              ? null
+              : () => controller.edit(removePaymentMethod),
+          icon: const Icon(Icons.delete_outline),
+          label: const Text('Remove'),
+        ),
+      ],
+    );
+  }
+}
+
+/// Asks for a payment method name.
+class _NameDialog extends StatefulWidget {
+  const _NameDialog({required this.initial});
+
+  final String initial;
+
+  @override
+  State<_NameDialog> createState() => _NameDialogState();
+}
+
+class _NameDialogState extends State<_NameDialog> {
+  late final _controller = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Payment method name'),
+    content: TextField(
+      key: const Key('paymentName'),
+      controller: _controller,
+      autofocus: true,
+      maxLength: maxPaymentNameLength,
+      decoration: const InputDecoration(labelText: 'Name'),
+      onSubmitted: (v) => Navigator.pop(context, v),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        key: const Key('savePaymentName'),
+        onPressed: () => Navigator.pop(context, _controller.text),
+        child: const Text('Save'),
+      ),
+    ],
+  );
 }
 
 class _SellerRow extends ConsumerWidget {
@@ -291,10 +407,24 @@ class _SellerRow extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          view.sellerLine(outcome),
-          key: Key('sellerResult$index'),
-          style: Theme.of(context).textTheme.bodyMedium,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                view.sellerLine(outcome),
+                key: Key('sellerResult$index'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            IconButton(
+              key: Key('removeSeller$index'),
+              tooltip: 'Remove ${outcome.seller.name}',
+              onPressed: view.sellers.length <= CalculatorSettings.minSellers
+                  ? null
+                  : () => controller.edit((s) => removeSeller(s, index)),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
         ),
       ],
     );

@@ -22,7 +22,7 @@ KinaDatabase memoryDatabase() => KinaDatabase(NativeDatabase.memory());
 Future<void> pumpApp(
   WidgetTester tester,
   KinaDatabase db, {
-  Size size = const Size(1440, 1180),
+  Size size = const Size(1440, 1700),
   FrankfurterClient? rateClient,
   FakeFileAccess? files,
   List<Uri>? openedLinks,

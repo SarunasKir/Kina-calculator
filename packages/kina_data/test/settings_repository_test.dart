@@ -83,6 +83,10 @@ void main() {
     const a = PaymentMethod(name: 'X', feePercent: '1', fixedFee: '2');
     expect(a, PaymentMethod.fromJson(a.toJson()));
     expect(a.hashCode, PaymentMethod.fromJson(a.toJson()).hashCode);
+    expect(
+      a.copyWith(name: 'Y'),
+      const PaymentMethod(name: 'Y', feePercent: '1', fixedFee: '2'),
+    );
     expect(a == a.copyWith(fixedFee: '3'), isFalse);
     expect(a.copyWith(feePercent: '9').fixedFee, '2');
     const s = Seller(name: 'S', pricePerMillion: '1');
