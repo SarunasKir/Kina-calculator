@@ -93,6 +93,79 @@ void main() {
     expect(s.hashCode, Seller.fromJson(s.toJson()).hashCode);
   });
 
+  test('sellers keep their fees and price source through JSON', () {
+    const source = PriceSource(
+      url: 'https://example.com/kina',
+      kind: SourceKind.css,
+      rule: '.price',
+      unitMillions: '100',
+      currency: 'USD',
+    );
+    const seller = Seller(
+      name: 'Site',
+      pricePerMillion: '1.5',
+      extraFeePercent: '2',
+      extraFixedFee: '0.5',
+      source: source,
+    );
+    final back = Seller.fromJson(seller.toJson());
+    expect(back, seller);
+    expect(back.source, source);
+    expect(back.hashCode, seller.hashCode);
+    expect(source.hashCode, PriceSource.fromJson(source.toJson()).hashCode);
+  });
+
+  test('older sellers and sources read with defaults', () {
+    final seller = Seller.fromJson(const {
+      'name': 'Old',
+      'pricePerMillion': '1',
+    });
+    expect(seller.extraFeePercent, '0');
+    expect(seller.extraFixedFee, '0');
+    expect(seller.source, isNull);
+    final source = PriceSource.fromJson(const {'kind': 'nonsense'});
+    expect(source.url, '');
+    expect(source.kind, SourceKind.auto);
+    expect(source.unitMillions, '1');
+    expect(source.currency, 'EUR');
+    expect(const PriceSource(url: 'u').rule, '');
+  });
+
+  test('seller and source copyWith replace only the given fields', () {
+    const source = PriceSource(url: 'a');
+    final changed = source.copyWith(
+      url: 'b',
+      kind: SourceKind.json,
+      rule: 'x.y',
+      unitMillions: '10',
+      currency: 'GBP',
+    );
+    expect(changed.url, 'b');
+    expect(changed.kind, SourceKind.json);
+    expect(changed.rule, 'x.y');
+    expect(changed.unitMillions, '10');
+    expect(changed.currency, 'GBP');
+    expect(changed == source, isFalse);
+    expect(source.copyWith(), source);
+
+    const seller = Seller(name: 'S', pricePerMillion: '1', source: source);
+    final updated = seller.copyWith(
+      name: 'T',
+      pricePerMillion: '2',
+      extraFeePercent: '3',
+      extraFixedFee: '4',
+      source: changed,
+    );
+    expect(updated.name, 'T');
+    expect(updated.pricePerMillion, '2');
+    expect(updated.extraFeePercent, '3');
+    expect(updated.extraFixedFee, '4');
+    expect(updated.source, changed);
+    expect(seller.copyWith().source, source);
+    expect(seller.copyWith(clearSource: true).source, isNull);
+    expect(seller == updated, isFalse);
+  });
+
   test('copyWith replaces only the given fields', () {
     final d = CalculatorSettings.defaults;
     final c = d.copyWith(

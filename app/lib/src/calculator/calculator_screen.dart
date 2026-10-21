@@ -232,19 +232,37 @@ class _Inputs extends ConsumerWidget {
           children: [
             for (var i = 0; i < view.sellers.length; i++)
               _SellerRow(index: i, view: view, symbol: symbol),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: OutlinedButton.icon(
-                key: const Key('addSeller'),
-                onPressed: s.sellers.length >= CalculatorSettings.maxSellers
-                    ? null
-                    : () => edit(addSeller),
-                icon: const Icon(Icons.add),
-                label: Text(
-                  'Add seller (${s.sellers.length} of '
-                  '${CalculatorSettings.maxSellers})',
+            if (view.cheapestLine case final line?)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  line,
+                  key: const Key('cheapest'),
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('addSeller'),
+                  onPressed: s.sellers.length >= CalculatorSettings.maxSellers
+                      ? null
+                      : () => edit(addSeller),
+                  icon: const Icon(Icons.add),
+                  label: Text(
+                    'Add seller (${s.sellers.length} of '
+                    '${CalculatorSettings.maxSellers})',
+                  ),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('fetchAll'),
+                  onPressed: () => _fetch(context, ref),
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  label: const Text('Fetch prices'),
+                ),
+              ],
             ),
           ],
         ),
@@ -376,12 +394,16 @@ class _SellerRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final outcome = view.sellers[index];
+    final seller = outcome.seller;
     final controller = ref.read(settingsProvider.notifier);
     void setSeller(Seller seller) => controller.edit((s) {
       final sellers = [...s.sellers];
       sellers[index] = seller;
       return s.copyWith(sellers: sellers);
     });
+    final source = seller.source ?? const PriceSource(url: '');
+    void setSource(PriceSource next) =>
+        setSeller(seller.copyWith(source: next));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,19 +413,15 @@ class _SellerRow extends ConsumerWidget {
             key: Key('sellerName$index'),
             label: 'Seller',
             numeric: false,
-            value: outcome.seller.name,
-            onChanged: (v) => setSeller(
-              Seller(name: v, pricePerMillion: outcome.seller.pricePerMillion),
-            ),
+            value: seller.name,
+            onChanged: (v) => setSeller(seller.copyWith(name: v)),
           ),
           second: SyncedTextField(
             key: Key('sellerPrice$index'),
             label: 'Price per 1M',
             prefix: symbol,
-            value: outcome.seller.pricePerMillion,
-            onChanged: (v) => setSeller(
-              Seller(name: outcome.seller.name, pricePerMillion: v),
-            ),
+            value: seller.pricePerMillion,
+            onChanged: (v) => setSeller(seller.copyWith(pricePerMillion: v)),
           ),
         ),
         const SizedBox(height: 4),
@@ -418,7 +436,7 @@ class _SellerRow extends ConsumerWidget {
             ),
             IconButton(
               key: Key('removeSeller$index'),
-              tooltip: 'Remove ${outcome.seller.name}',
+              tooltip: 'Remove ${seller.name}',
               onPressed: view.sellers.length <= CalculatorSettings.minSellers
                   ? null
                   : () => controller.edit((s) => removeSeller(s, index)),
@@ -426,9 +444,132 @@ class _SellerRow extends ConsumerWidget {
             ),
           ],
         ),
+        ExpansionTile(
+          key: Key('sellerDetails$index'),
+          title: const Text('Site and fees'),
+          tilePadding: EdgeInsets.zero,
+          childrenPadding: const EdgeInsets.only(bottom: 8),
+          children: [
+            FieldPair(
+              first: SyncedTextField(
+                key: Key('sellerFee$index'),
+                label: 'Extra site fee',
+                suffix: '%',
+                value: seller.extraFeePercent,
+                onChanged: (v) =>
+                    setSeller(seller.copyWith(extraFeePercent: v)),
+              ),
+              second: SyncedTextField(
+                key: Key('sellerFixed$index'),
+                label: 'Extra fixed fee',
+                prefix: symbol,
+                value: seller.extraFixedFee,
+                onChanged: (v) => setSeller(seller.copyWith(extraFixedFee: v)),
+              ),
+            ),
+            SyncedTextField(
+              key: Key('sourceUrl$index'),
+              label: 'Site address',
+              numeric: false,
+              value: source.url,
+              onChanged: (v) => setSource(source.copyWith(url: v)),
+            ),
+            FieldPair(
+              first: DropdownButtonFormField<SourceKind>(
+                key: Key('sourceKind$index'),
+                initialValue: source.kind,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Read as'),
+                items: const [
+                  DropdownMenuItem(
+                    value: SourceKind.auto,
+                    child: Text('Automatic'),
+                  ),
+                  DropdownMenuItem(
+                    value: SourceKind.json,
+                    child: Text('JSON address'),
+                  ),
+                  DropdownMenuItem(
+                    value: SourceKind.css,
+                    child: Text('Page selector'),
+                  ),
+                ],
+                onChanged: (k) => setSource(source.copyWith(kind: k)),
+              ),
+              second: source.kind == SourceKind.auto
+                  ? const SizedBox.shrink()
+                  : SyncedTextField(
+                      key: Key('sourceRule$index'),
+                      label: source.kind == SourceKind.json
+                          ? 'JSON path, e.g. data.price'
+                          : 'CSS selector, e.g. .price',
+                      numeric: false,
+                      value: source.rule,
+                      onChanged: (v) => setSource(source.copyWith(rule: v)),
+                    ),
+            ),
+            FieldPair(
+              first: DropdownButtonFormField<String>(
+                key: Key('sourceUnit$index'),
+                initialValue: _units.contains(source.unitMillions)
+                    ? source.unitMillions
+                    : '1',
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Price is for'),
+                items: [
+                  for (final u in _units)
+                    DropdownMenuItem(
+                      value: u,
+                      child: Text(u == '1000' ? '1B Kina' : '${u}M Kina'),
+                    ),
+                ],
+                onChanged: (u) => setSource(source.copyWith(unitMillions: u)),
+              ),
+              second: DropdownButtonFormField<String>(
+                key: Key('sourceCurrency$index'),
+                initialValue: source.currency,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Site currency'),
+                items: [
+                  for (final c in {
+                    ...view.settings.ratesPerEur.keys,
+                    source.currency,
+                  })
+                    DropdownMenuItem(value: c, child: Text(c)),
+                ],
+                onChanged: (c) => setSource(source.copyWith(currency: c)),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.tonalIcon(
+                key: Key('fetchSeller$index'),
+                onPressed: () => _fetch(context, ref, index),
+                icon: const Icon(Icons.cloud_download_outlined),
+                label: const Text('Fetch price'),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
+}
+
+const _units = ['1', '10', '100', '1000'];
+
+Future<void> _fetch(BuildContext context, WidgetRef ref, [int? only]) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final messages = await ref
+      .read(settingsProvider.notifier)
+      .fetchSellerPrices(only: only);
+  messenger.showSnackBar(
+    SnackBar(
+      content: Text(
+        messages.isEmpty ? 'Add a site address first' : messages.join('\n'),
+      ),
+    ),
+  );
 }
 
 class _CurrencyCard extends ConsumerStatefulWidget {

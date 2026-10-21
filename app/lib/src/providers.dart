@@ -3,6 +3,9 @@ import 'package:kina_app/src/calculator/calculator_logic.dart';
 import 'package:kina_app/src/calculator/calculator_view.dart';
 import 'package:kina_app/src/files/file_access.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
+import 'package:kina_app/src/sources/price_extractor.dart';
+import 'package:kina_app/src/sources/seller_prices.dart';
+import 'package:kina_app/src/sources/source_client.dart';
 import 'package:kina_data/kina_data.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,6 +18,9 @@ final databaseProvider = Provider<KinaDatabase>(
 final rateClientProvider = Provider<FrankfurterClient>(
   (ref) => FrankfurterClient(),
 );
+
+/// Downloads seller pages. Tests override this with a fake.
+final sourceClientProvider = Provider<SourceClient>((ref) => SourceClient());
 
 /// Saving and opening files. Tests override this with a fake.
 final fileAccessProvider = Provider<FileAccess>(
@@ -90,6 +96,48 @@ class SettingsController extends AsyncNotifier<CalculatorSettings> {
       }, published.date),
     );
     return published;
+  }
+
+  /// Fetches the price of each seller that has a site address (only seller
+  /// [only] when given) and saves the ones that were read. Returns one
+  /// message per seller that was tried: the new price or the reason it
+  /// failed.
+  Future<List<String>> fetchSellerPrices({int? only}) async {
+    final current = state.value;
+    if (current == null) {
+      return const [];
+    }
+    final client = ref.read(sourceClientProvider);
+    final tried = [
+      for (var i = 0; i < current.sellers.length; i++)
+        if ((only == null || only == i) &&
+            (current.sellers[i].source?.url.trim().isNotEmpty ?? false))
+          i,
+    ];
+    final prices = <int, String>{};
+    final messages = await Future.wait([
+      for (final i in tried)
+        () async {
+          final seller = current.sellers[i];
+          try {
+            prices[i] = await fetchSellerPrice(client, current, seller);
+            return '${seller.name}: ${prices[i]}';
+          } on SourceReadException catch (e) {
+            return '${seller.name}: ${e.message}';
+          }
+        }(),
+    ]);
+    await edit(
+      (s) => s.copyWith(
+        sellers: [
+          for (var i = 0; i < s.sellers.length; i++)
+            s.sellers[i].copyWith(
+              pricePerMillion: prices[i] ?? s.sellers[i].pricePerMillion,
+            ),
+        ],
+      ),
+    );
+    return messages;
   }
 }
 
