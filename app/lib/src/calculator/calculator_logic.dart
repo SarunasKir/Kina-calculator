@@ -7,7 +7,7 @@ import 'package:kina_data/kina_data.dart';
 /// seller [rate].
 PurchaseInput purchaseInput(CalculatorSettings settings, {Decimal? rate}) =>
     PurchaseInput(
-      millions: parseAmount(settings.amountMillions),
+      millions: parseMillions(settings.amountMillions),
       ratePerMillion: rate ?? parseAmount(settings.pricePerMillion),
       vatPercent: parseAmount(settings.vatPercent),
       feePercent: parseAmount(settings.payment.feePercent),

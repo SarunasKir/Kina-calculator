@@ -212,4 +212,26 @@ void main() {
     expect(files.saved.values.single, contains('RMT total,385.80'));
     expect(find.textContaining('CSV saved'), findsOneWidget);
   });
+
+  testWidgets('marks unreadable numbers and counts them as zero', (
+    tester,
+  ) async {
+    await pumpApp(tester, db);
+    await enter(tester, const Key('price'), '1.2.3');
+    expect(find.text('Enter a number such as 12.5'), findsOneWidget);
+    expect(find.textContaining('RMT total'), findsWidgets);
+    await enter(tester, const Key('price'), '1.5');
+    expect(find.text('Enter a number such as 12.5'), findsNothing);
+  });
+
+  testWidgets('the Kina amount accepts compact notation', (tester) async {
+    await pumpApp(tester, db);
+    await enter(tester, const Key('amount'), '1.5b');
+    expect(find.text('Enter a number such as 12.5'), findsNothing);
+    expect(find.text('Use a number such as 300 or 1.5b'), findsNothing);
+    expect(find.textContaining('90000'), findsNothing);
+    expect(find.textContaining('450000'), findsWidgets);
+    await enter(tester, const Key('amount'), '1.2.3m');
+    expect(find.text('Use a number such as 300 or 1.5b'), findsOneWidget);
+  });
 }

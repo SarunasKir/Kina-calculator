@@ -17,7 +17,7 @@ List<BreakdownLine> breakdown(CalculatorView view) {
     (
       label: 'Quantity',
       value:
-          '${parseAmount(s.amountMillions)} million Kina × '
+          '${parseMillions(s.amountMillions)} million Kina × '
           '${money(parseAmount(s.pricePerMillion))} per 1M',
     ),
     (
@@ -85,7 +85,7 @@ PriceSnapshot snapshotOf(
   required DateTime takenAt,
 }) {
   final s = view.settings;
-  final millions = parseAmount(s.amountMillions);
+  final millions = parseMillions(s.amountMillions);
   if (millions <= Decimal.zero) {
     throw const SnapshotException(
       'Enter a positive Kina amount before saving a snapshot',
