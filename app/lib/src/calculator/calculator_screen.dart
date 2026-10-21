@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kina_app/src/calculator/calculator_logic.dart';
 import 'package:kina_app/src/calculator/calculator_view.dart';
+import 'package:kina_app/src/export/csv.dart';
+import 'package:kina_app/src/export/export_action.dart';
 import 'package:kina_app/src/format.dart';
+import 'package:kina_app/src/help/help.dart';
 import 'package:kina_app/src/providers.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
 import 'package:kina_app/src/widgets/section_card.dart';
@@ -147,6 +150,7 @@ class _Inputs extends ConsumerWidget {
                 label: 'Payment fee',
                 suffix: '%',
                 value: s.payment.feePercent,
+                onInfo: () => showHelp(context, HelpTopic.fees),
                 onChanged: (v) => edit(
                   (s) => _withPayment(s, s.payment.copyWith(feePercent: v)),
                 ),
@@ -166,6 +170,7 @@ class _Inputs extends ConsumerWidget {
               label: 'VAT',
               suffix: '%',
               value: s.vatPercent,
+              onInfo: () => showHelp(context, HelpTopic.vat),
               onChanged: (v) => edit((s) => s.copyWith(vatPercent: v)),
             ),
           ],
@@ -375,16 +380,6 @@ class _CurrencyCardState extends ConsumerState<_CurrencyCard> {
   }
 }
 
-/// The rate source line under the currency fields.
-String rateStatus(CalculatorSettings s) => switch (s.rateSource) {
-  RateSource.ecb => 'ECB via Frankfurter · published ${s.rateDate ?? '?'}',
-  RateSource.manual =>
-    s.rateDate == null
-        ? 'Manual rate'
-        : 'Manual rate · last sync ${s.rateDate}',
-  RateSource.saved => 'Saved rates · internet needed to sync',
-};
-
 class _Results extends ConsumerWidget {
   const _Results({required this.view});
 
@@ -471,14 +466,29 @@ class _Results extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Align(
-          alignment: Alignment.centerRight,
-          child: OutlinedButton.icon(
-            key: const Key('reset'),
-            onPressed: () => _confirmReset(context, ref),
-            icon: const Icon(Icons.restart_alt),
-            label: const Text('Reset to defaults'),
-          ),
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            OutlinedButton.icon(
+              key: const Key('exportCalculation'),
+              onPressed: () => exportCsv(
+                context,
+                ref,
+                stem: 'kina_comparison',
+                csv: calculatorCsv(view),
+              ),
+              icon: const Icon(Icons.download),
+              label: const Text('Export CSV'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('reset'),
+              onPressed: () => _confirmReset(context, ref),
+              icon: const Icon(Icons.restart_alt),
+              label: const Text('Reset to defaults'),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Text(

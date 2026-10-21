@@ -15,6 +15,7 @@ class SyncedTextField extends StatefulWidget {
     this.numeric = true,
     this.prefix,
     this.suffix,
+    this.onInfo,
     super.key,
   });
 
@@ -38,6 +39,9 @@ class SyncedTextField extends StatefulWidget {
 
   /// Text after the input, such as `%`.
   final String? suffix;
+
+  /// When set, shows an info button that calls this, for help popups.
+  final VoidCallback? onInfo;
 
   @override
   State<SyncedTextField> createState() => _SyncedTextFieldState();
@@ -85,6 +89,13 @@ class _SyncedTextFieldState extends State<SyncedTextField> {
       labelText: widget.label,
       prefixText: widget.prefix == null ? null : '${widget.prefix} ',
       suffixText: widget.suffix,
+      suffixIcon: widget.onInfo == null
+          ? null
+          : IconButton(
+              icon: const Icon(Icons.info_outline),
+              tooltip: 'About ${widget.label}',
+              onPressed: widget.onInfo,
+            ),
     ),
     keyboardType: widget.numeric
         ? const TextInputType.numberWithOptions(decimal: true)
