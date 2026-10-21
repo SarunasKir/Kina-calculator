@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kina_app/src/analysis/analysis_screen.dart';
 import 'package:kina_app/src/calculator/calculator_screen.dart';
 import 'package:kina_app/src/marketplace/marketplace_screen.dart';
 import 'package:kina_app/src/more/more_screen.dart';
+import 'package:kina_app/src/sync/sync_providers.dart';
 import 'package:kina_app/src/theme.dart';
 
 /// The app root.
@@ -40,16 +44,28 @@ const List<_Destination> _destinations = [
 
 /// Switches between the app's pages: a side rail on wide windows, a bottom
 /// bar on phones. Pages keep their state while hidden.
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   /// Creates the shell.
   const HomeShell({super.key});
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell> {
   var _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // On the PC this starts the sync server if it was switched on; on a
+    // phone it syncs once, quietly.
+    if (ref.read(syncRoleProvider) == SyncRole.hub) {
+      unawaited(ref.read(hubControllerProvider.future));
+    } else {
+      unawaited(ref.read(pairingProvider.notifier).autoSync());
+    }
+  }
 
   void _select(int index) => setState(() => _index = index);
 

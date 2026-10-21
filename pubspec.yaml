@@ -7,6 +7,7 @@ environment:
 workspace:
   - packages/kina_core
   - packages/kina_data
+  - packages/kina_sync
   - app
 
 dev_dependencies:

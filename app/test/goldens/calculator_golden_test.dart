@@ -5,6 +5,7 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kina_app/src/app.dart';
+import 'package:kina_app/src/sync/sync_providers.dart';
 import 'package:kina_data/kina_data.dart';
 
 import '../helpers.dart';
@@ -17,6 +18,7 @@ Future<void> golden(
   required String name,
   String? page,
   String? tab,
+  SyncRole role = SyncRole.phone,
 }) async {
   tester.platformDispatcher.platformBrightnessTestValue = brightness;
   addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
@@ -28,7 +30,7 @@ Future<void> golden(
     ).save(CalculatorSettings.defaults.copyWith(vatPercent: '21')),
   );
   await tester.runAsync(() => seed(db));
-  await pumpApp(tester, db, size: size * pixelRatio);
+  await pumpApp(tester, db, size: size * pixelRatio, role: role);
   tester.view.devicePixelRatio = pixelRatio;
   await tester.pumpAndSettle();
   if (page != null) {
@@ -150,6 +152,8 @@ void main() {
         name: 'windows_$file',
         page: page,
         tab: tab,
+        // The PC is the sync hub; the phone pairs with it.
+        role: SyncRole.hub,
       ),
     );
     testWidgets(

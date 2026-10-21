@@ -11,11 +11,9 @@ payment fees. It is a rebuild of the v55 Windows app for Windows and Android.
 | `app` | The Flutter app for Windows and Android |
 | `packages/kina_core` | Calculations, Kina price parser and currency maths (pure Dart) |
 | `packages/kina_data` | SQLite storage (Drift) for settings, profiles, price history and the purchase journal, plus v55 import |
-| `docs/` | Architecture decision records |
+| `packages/kina_sync` | Wi-Fi sync: the hub inside the PC app, the phone client, pairing, discovery and merging |
+| `docs/` | Architecture decision records and the [sync design](docs/sync.md) |
 | `tool/` | Scripts used by CI |
-
-The Marketplace, Analysis and Help screens and Wi-Fi sync will be added in
-later pull requests.
 
 ## Development
 
@@ -28,6 +26,7 @@ dart format .
 dart analyze --fatal-infos
 (cd packages/kina_core && dart test)
 (cd packages/kina_data && dart test)
+(cd packages/kina_sync && dart test)
 (cd app && flutter test)
 ```
 
@@ -39,7 +38,7 @@ regenerate the Drift code with
 `cd packages/kina_data && dart run build_runner build`.
 
 CI runs formatting, analysis and tests on every push and pull request, and
-requires 100% line coverage for both packages (generated code excluded)
+requires 100% line coverage for the three packages (generated code excluded)
 and 95% for the app. Screen images in `app/test/goldens` must match.
 
 ## Calculation rules
