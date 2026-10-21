@@ -14,9 +14,18 @@ void main() {
     await pumpApp(tester, db);
     expect(find.byType(NavigationRail), findsOneWidget);
     expect(find.byType(NavigationBar), findsNothing);
-    expect(find.text('Kina Calculator'), findsOneWidget);
+    final title = find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byType(Text),
+    );
+    expect(tester.widgetList<Text>(title).map((t) => t.data), [
+      'KINA CALCULATOR',
+    ]);
     await goTo(tester, 'Analysis');
-    expect(find.text('Kina Calculator · Analysis'), findsOneWidget);
+    expect(tester.widgetList<Text>(title).map((t) => t.data), [
+      'KINA CALCULATOR',
+      'Analysis',
+    ]);
   });
 
   testWidgets('phones use a bottom bar and keep page state', (tester) async {

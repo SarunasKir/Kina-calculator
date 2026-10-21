@@ -12,6 +12,18 @@ const _rose = Color(0xFF9A635B);
 const _line = Color(0xFF3D2B3A);
 const _red = Color(0xFFE84F4F);
 
+/// Green for savings, over [savingsGoodPanel].
+const savingsGood = Color(0xFF7FD6A0);
+
+/// Background of a savings result.
+const savingsGoodPanel = Color(0xFF1B3327);
+
+/// Red for a loss, over [savingsBadPanel].
+const savingsBad = Color(0xFFFF8A80);
+
+/// Background of a loss result.
+const savingsBadPanel = Color(0xFF4A1F24);
+
 const _scheme = ColorScheme(
   brightness: Brightness.dark,
   primary: _gold,
@@ -101,11 +113,11 @@ final ThemeData aionTheme = ThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   ),
-  navigationRailTheme: const NavigationRailThemeData(
+  navigationRailTheme: NavigationRailThemeData(
     backgroundColor: _background,
-    indicatorColor: Color(0xFF4A3322),
-    selectedIconTheme: IconThemeData(color: _gold),
-    selectedLabelTextStyle: TextStyle(
+    indicatorColor: const Color(0xFF4A3322),
+    selectedIconTheme: const IconThemeData(color: _gold),
+    selectedLabelTextStyle: _textTheme.labelMedium?.copyWith(
       color: _gold,
       fontWeight: FontWeight.w600,
     ),

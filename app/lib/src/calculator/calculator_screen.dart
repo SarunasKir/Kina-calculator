@@ -8,6 +8,7 @@ import 'package:kina_app/src/format.dart';
 import 'package:kina_app/src/help/help.dart';
 import 'package:kina_app/src/providers.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
+import 'package:kina_app/src/theme.dart';
 import 'package:kina_app/src/widgets/section_card.dart';
 import 'package:kina_app/src/widgets/synced_text_field.dart';
 import 'package:kina_data/kina_data.dart';
@@ -87,7 +88,17 @@ class _SummaryBar extends StatelessWidget {
                 emphasize: true,
               ),
               const SizedBox(height: 4),
-              Text(view.savingsLine, style: theme.textTheme.bodyMedium),
+              Text(
+                view.savingsLine,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: !view.main.officialValid
+                      ? null
+                      : view.main.savings.sign >= 0
+                      ? savingsGood
+                      : savingsBad,
+                ),
+              ),
             ],
           ),
         ),
@@ -434,8 +445,8 @@ class _Results extends ConsumerWidget {
           color: !r.officialValid
               ? null
               : good
-              ? theme.colorScheme.primaryContainer
-              : theme.colorScheme.errorContainer,
+              ? savingsGoodPanel
+              : savingsBadPanel,
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -444,7 +455,14 @@ class _Results extends ConsumerWidget {
                 Text(
                   view.savingsLine,
                   key: const Key('savings'),
-                  style: theme.textTheme.titleMedium,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontSize: 20,
+                    color: !r.officialValid
+                        ? null
+                        : good
+                        ? savingsGood
+                        : savingsBad,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
