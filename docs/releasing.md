@@ -42,12 +42,19 @@ and prints a warning. Do not publish such an APK.
 ## Making a release
 
 1. Make sure the latest commit on `main` has a green CI run.
-2. Tag it and push the tag:
+2. Start the release in either of two ways:
 
-   ```
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
+   - Push a tag from a clone of the repository:
+
+     ```
+     git tag v0.2.0
+     git push origin v0.2.0
+     ```
+
+   - Or on GitHub open Releases, Draft a new release, type `v0.2.0` in
+     "Choose a tag" and pick "Create new tag on publish" with target `main`,
+     then Publish. Publishing creates the tag, and the workflow adds the
+     installers to that release.
 
 3. The Release workflow builds both files and publishes the release with
    generated notes. The version in the tag becomes the app version, and the
