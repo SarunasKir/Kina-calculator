@@ -10,6 +10,7 @@ import 'package:kina_app/src/app.dart';
 import 'package:kina_app/src/files/file_access.dart';
 import 'package:kina_app/src/providers.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
+import 'package:kina_app/src/sources/source_client.dart';
 import 'package:kina_app/src/sync/sync_providers.dart';
 import 'package:kina_data/kina_data.dart';
 import 'package:kina_sync/kina_sync.dart';
@@ -24,6 +25,7 @@ Future<void> pumpApp(
   KinaDatabase db, {
   Size size = const Size(1440, 1700),
   FrankfurterClient? rateClient,
+  SourceClient? sourceClient,
   FakeFileAccess? files,
   List<Uri>? openedLinks,
   SyncRole role = SyncRole.phone,
@@ -41,6 +43,8 @@ Future<void> pumpApp(
         databaseProvider.overrideWithValue(db),
         if (rateClient != null)
           rateClientProvider.overrideWithValue(rateClient),
+        if (sourceClient != null)
+          sourceClientProvider.overrideWithValue(sourceClient),
         fileAccessProvider.overrideWithValue(files ?? FakeFileAccess()),
         syncRoleProvider.overrideWithValue(role),
         deviceNameProvider.overrideWithValue('Test phone'),

@@ -6,6 +6,7 @@ import 'package:kina_data/kina_data.dart';
 Decimal d(String s) => Decimal.parse(s);
 
 void main() {
+  siteFeeTests();
   final base = CalculatorSettings.defaults;
 
   test('purchaseInput reads every field and the selected fees', () {
@@ -153,6 +154,44 @@ void main() {
       expect(selectedIndex(base.copyWith(selectedPayment: 99)), 0);
       expect(selectedIndex(base.copyWith(selectedPayment: -1)), 0);
       expect(selectedIndex(base.copyWith(selectedPayment: 2)), 2);
+    });
+  });
+}
+
+void siteFeeTests() {
+  final base = CalculatorSettings.defaults;
+
+  group('site fees', () {
+    test('add to the payment method fees', () {
+      const seller = Seller(
+        name: 'S',
+        pricePerMillion: '1',
+        extraFeePercent: '2',
+        extraFixedFee: '1.5',
+      );
+      final input = purchaseInput(base, seller: seller);
+      expect(input.feePercent, d('5.9'));
+      expect(input.fixedFee, d('2.49'));
+      expect(purchaseInput(base).feePercent, d('3.9'));
+    });
+
+    test('currency changes keep a seller site and scale its fixed fee', () {
+      const source = PriceSource(url: 'https://x.test');
+      final s = base.copyWith(
+        sellers: [
+          const Seller(
+            name: 'S',
+            pricePerMillion: '1',
+            extraFeePercent: '2',
+            extraFixedFee: '10',
+            source: source,
+          ),
+        ],
+      );
+      final usd = changeCurrency(s, 'USD').sellers.single;
+      expect(usd.extraFixedFee, '11');
+      expect(usd.extraFeePercent, '2');
+      expect(usd.source, source);
     });
   });
 }

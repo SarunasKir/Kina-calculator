@@ -4,19 +4,26 @@ import 'package:kina_core/kina_core.dart';
 import 'package:kina_data/kina_data.dart';
 
 /// Builds the calculation input from [settings], optionally at another
-/// seller [rate].
-PurchaseInput purchaseInput(CalculatorSettings settings, {Decimal? rate}) =>
-    PurchaseInput(
-      millions: parseMillions(settings.amountMillions),
-      ratePerMillion: rate ?? parseAmount(settings.pricePerMillion),
-      vatPercent: parseAmount(settings.vatPercent),
-      feePercent: parseAmount(settings.payment.feePercent),
-      fixedFee: parseAmount(settings.payment.fixedFee),
-      qunaPerPack: parseAmount(settings.qunaPerPack),
-      packPrice: parseAmount(settings.packPrice),
-      qunaPerChest: parseAmount(settings.qunaPerChest),
-      millionsPerChest: parseAmount(settings.millionsPerChest),
-    );
+/// seller [rate]. A [seller]'s site fees are added to the payment method's.
+PurchaseInput purchaseInput(
+  CalculatorSettings settings, {
+  Decimal? rate,
+  Seller? seller,
+}) => PurchaseInput(
+  millions: parseMillions(settings.amountMillions),
+  ratePerMillion: rate ?? parseAmount(settings.pricePerMillion),
+  vatPercent: parseAmount(settings.vatPercent),
+  feePercent:
+      parseAmount(settings.payment.feePercent) +
+      (seller == null ? Decimal.zero : parseAmount(seller.extraFeePercent)),
+  fixedFee:
+      parseAmount(settings.payment.fixedFee) +
+      (seller == null ? Decimal.zero : parseAmount(seller.extraFixedFee)),
+  qunaPerPack: parseAmount(settings.qunaPerPack),
+  packPrice: parseAmount(settings.packPrice),
+  qunaPerChest: parseAmount(settings.qunaPerChest),
+  millionsPerChest: parseAmount(settings.millionsPerChest),
+);
 
 /// The rate table stored in [settings].
 ExchangeRates ratesOf(CalculatorSettings settings) =>
@@ -35,9 +42,9 @@ CalculatorSettings revalueMoney(CalculatorSettings s, Decimal factor) {
     ],
     sellers: [
       for (final seller in s.sellers)
-        Seller(
-          name: seller.name,
+        seller.copyWith(
           pricePerMillion: scale(seller.pricePerMillion),
+          extraFixedFee: scale(seller.extraFixedFee),
         ),
     ],
   );

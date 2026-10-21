@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:kina_app/src/calculator/calculator_view.dart';
 import 'package:kina_app/src/rates/rate_sync.dart';
+import 'package:kina_app/src/sources/source_client.dart';
 import 'package:kina_data/kina_data.dart';
 
 import '../helpers.dart';
@@ -30,6 +31,7 @@ void main() {
     db = memoryDatabase();
   });
   tearDown(() => db.close());
+  siteTests(() => db);
 
   Future<CalculatorSettings> saved(WidgetTester tester) async =>
       (await tester.runAsync(() => SettingsRepository(db).load()))!;
@@ -345,5 +347,114 @@ void main() {
       find.byKey(const Key('removePayment')),
     );
     expect(remove.onPressed, isNull);
+  });
+}
+
+void siteTests(KinaDatabase Function() database) {
+  group('seller sites', () => _siteGroup(database));
+}
+
+void _siteGroup(KinaDatabase Function() database) {
+  late KinaDatabase db;
+  setUp(() => db = database());
+
+  Future<CalculatorSettings> saved(WidgetTester tester) async =>
+      (await tester.runAsync(() => SettingsRepository(db).load()))!;
+
+  Future<void> openDetails(WidgetTester tester, int i) async {
+    await tester.tap(find.byKey(Key('sellerDetails$i')));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('site fees change the seller total and the cheapest line', (
+    tester,
+  ) async {
+    await pumpApp(tester, db);
+    expect(
+      textOf(tester, const Key('cheapest')),
+      startsWith('Cheapest: Seller A'),
+    );
+    await openDetails(tester, 0);
+    await enter(tester, const Key('sellerFixed0'), '500');
+    expect(
+      textOf(tester, const Key('cheapest')),
+      startsWith('Cheapest: Seller B'),
+    );
+    await enter(tester, const Key('sellerFee0'), '10');
+    final s = await saved(tester);
+    expect(s.sellers.first.extraFixedFee, '500');
+    expect(s.sellers.first.extraFeePercent, '10');
+  });
+
+  testWidgets('site settings are saved per seller', (tester) async {
+    await pumpApp(tester, db);
+    await openDetails(tester, 1);
+    await enter(tester, const Key('sourceUrl1'), 'https://x.test/p');
+    await choose(tester, const Key('sourceKind1'), 'JSON address');
+    await enter(tester, const Key('sourceRule1'), 'data.price');
+    await choose(tester, const Key('sourceUnit1'), '10M Kina');
+    await choose(tester, const Key('sourceCurrency1'), 'USD');
+    final source = (await saved(tester)).sellers[1].source!;
+    expect(source.url, 'https://x.test/p');
+    expect(source.kind, SourceKind.json);
+    expect(source.rule, 'data.price');
+    expect(source.unitMillions, '10');
+    expect(source.currency, 'USD');
+    await choose(tester, const Key('sourceKind1'), 'Page selector');
+    expect(find.text('CSS selector, e.g. .price'), findsOneWidget);
+    await choose(tester, const Key('sourceKind1'), 'Automatic');
+    expect(find.byKey(const Key('sourceRule1')), findsNothing);
+  });
+
+  testWidgets('fetch price fills the seller price', (tester) async {
+    final client = SourceClient(
+      client: MockClient((_) async => http.Response('{"price":"12"}', 200)),
+    );
+    await pumpApp(tester, db, sourceClient: client);
+    await openDetails(tester, 0);
+    await tester.tap(find.byKey(const Key('fetchSeller0')));
+    await settle(tester);
+    await expectSnack(tester, 'Add a site address first');
+    await enter(tester, const Key('sourceUrl0'), 'https://x.test/p');
+    await choose(tester, const Key('sourceUnit0'), '10M Kina');
+    await tester.tap(find.byKey(const Key('fetchSeller0')));
+    await settle(tester);
+    expect(find.text('Seller A: 1.2'), findsOneWidget);
+    expect((await saved(tester)).sellers.first.pricePerMillion, '1.2');
+  });
+
+  testWidgets('fetch prices reads every site and reports failures', (
+    tester,
+  ) async {
+    final client = SourceClient(
+      client: MockClient((request) async {
+        return request.url.path == '/bad'
+            ? http.Response('', 500)
+            : http.Response('{"price":"3"}', 200);
+      }),
+    );
+    final s = CalculatorSettings.defaults.copyWith(
+      sellers: const [
+        Seller(
+          name: 'A',
+          pricePerMillion: '1',
+          source: PriceSource(url: 'https://x.test/good'),
+        ),
+        Seller(
+          name: 'B',
+          pricePerMillion: '1',
+          source: PriceSource(url: 'https://x.test/bad'),
+        ),
+        Seller(name: 'C', pricePerMillion: '7'),
+      ],
+    );
+    await tester.runAsync(() => SettingsRepository(db).save(s));
+    await pumpApp(tester, db, sourceClient: client);
+    await tester.tap(find.byKey(const Key('fetchAll')));
+    await settle(tester);
+    expect(find.textContaining('A: 3'), findsOneWidget);
+    expect(find.textContaining('B: HTTP 500'), findsOneWidget);
+    final sellers = (await saved(tester)).sellers;
+    expect(sellers.map((x) => x.pricePerMillion), ['3', '1', '7']);
   });
 }

@@ -56,16 +56,112 @@ class PaymentMethod {
   int get hashCode => Object.hash(name, feePercent, fixedFee);
 }
 
+/// How a seller's page is read to find its price.
+enum SourceKind {
+  /// Look for prices in the page automatically.
+  auto,
+
+  /// The address returns JSON; the rule is a path such as `data.price`.
+  json,
+
+  /// The address returns a web page; the rule is a CSS selector.
+  css,
+}
+
+/// Where to fetch a seller's price from.
+@immutable
+class PriceSource {
+  /// Creates a price source.
+  const PriceSource({
+    required this.url,
+    this.kind = SourceKind.auto,
+    this.rule = '',
+    this.unitMillions = '1',
+    this.currency = 'EUR',
+  });
+
+  /// Reads a source from [json].
+  factory PriceSource.fromJson(Map<String, Object?> json) => PriceSource(
+    url: json['url'] as String? ?? '',
+    kind: SourceKind.values.asNameMap()[json['kind']] ?? SourceKind.auto,
+    rule: json['rule'] as String? ?? '',
+    unitMillions: json['unitMillions'] as String? ?? '1',
+    currency: json['currency'] as String? ?? 'EUR',
+  );
+
+  /// The page or data address.
+  final String url;
+
+  /// How to read the address.
+  final SourceKind kind;
+
+  /// The path or selector, when [kind] needs one.
+  final String rule;
+
+  /// How many millions of Kina the page's price is for, as typed.
+  final String unitMillions;
+
+  /// Currency code the page quotes in.
+  final String currency;
+
+  /// Returns a copy with the given fields replaced.
+  PriceSource copyWith({
+    String? url,
+    SourceKind? kind,
+    String? rule,
+    String? unitMillions,
+    String? currency,
+  }) => PriceSource(
+    url: url ?? this.url,
+    kind: kind ?? this.kind,
+    rule: rule ?? this.rule,
+    unitMillions: unitMillions ?? this.unitMillions,
+    currency: currency ?? this.currency,
+  );
+
+  /// Converts to JSON.
+  Map<String, Object?> toJson() => {
+    'url': url,
+    'kind': kind.name,
+    'rule': rule,
+    'unitMillions': unitMillions,
+    'currency': currency,
+  };
+
+  @override
+  bool operator ==(Object other) =>
+      other is PriceSource &&
+      other.url == url &&
+      other.kind == kind &&
+      other.rule == rule &&
+      other.unitMillions == unitMillions &&
+      other.currency == currency;
+
+  @override
+  int get hashCode => Object.hash(url, kind, rule, unitMillions, currency);
+}
+
 /// A named seller in the comparison table (requirement FR-6).
 @immutable
 class Seller {
   /// Creates a seller.
-  const Seller({required this.name, required this.pricePerMillion});
+  const Seller({
+    required this.name,
+    required this.pricePerMillion,
+    this.extraFeePercent = '0',
+    this.extraFixedFee = '0',
+    this.source,
+  });
 
   /// Reads a seller from [json].
   factory Seller.fromJson(Map<String, Object?> json) => Seller(
     name: json['name']! as String,
     pricePerMillion: json['pricePerMillion']! as String,
+    extraFeePercent: json['extraFeePercent'] as String? ?? '0',
+    extraFixedFee: json['extraFixedFee'] as String? ?? '0',
+    source: json['source'] is Map<String, Object?>
+        ? PriceSource.fromJson(json['source']! as Map<String, Object?>)
+        : null,
   );
 
   /// Seller name.
@@ -74,20 +170,58 @@ class Seller {
   /// Price per one million Kina, as typed.
   final String pricePerMillion;
 
+  /// This seller's own fee percentage, added to the payment method's.
+  final String extraFeePercent;
+
+  /// This seller's own fixed fee, added to the payment method's.
+  final String extraFixedFee;
+
+  /// Where to fetch the price from, if set.
+  final PriceSource? source;
+
+  /// Returns a copy with the given fields replaced. Pass [clearSource] to
+  /// remove the price source.
+  Seller copyWith({
+    String? name,
+    String? pricePerMillion,
+    String? extraFeePercent,
+    String? extraFixedFee,
+    PriceSource? source,
+    bool clearSource = false,
+  }) => Seller(
+    name: name ?? this.name,
+    pricePerMillion: pricePerMillion ?? this.pricePerMillion,
+    extraFeePercent: extraFeePercent ?? this.extraFeePercent,
+    extraFixedFee: extraFixedFee ?? this.extraFixedFee,
+    source: clearSource ? null : source ?? this.source,
+  );
+
   /// Converts to JSON.
   Map<String, Object?> toJson() => {
     'name': name,
     'pricePerMillion': pricePerMillion,
+    'extraFeePercent': extraFeePercent,
+    'extraFixedFee': extraFixedFee,
+    if (source != null) 'source': source!.toJson(),
   };
 
   @override
   bool operator ==(Object other) =>
       other is Seller &&
       other.name == name &&
-      other.pricePerMillion == pricePerMillion;
+      other.pricePerMillion == pricePerMillion &&
+      other.extraFeePercent == extraFeePercent &&
+      other.extraFixedFee == extraFixedFee &&
+      other.source == source;
 
   @override
-  int get hashCode => Object.hash(name, pricePerMillion);
+  int get hashCode => Object.hash(
+    name,
+    pricePerMillion,
+    extraFeePercent,
+    extraFixedFee,
+    source,
+  );
 }
 
 /// Where the current exchange rates came from.

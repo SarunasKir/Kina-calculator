@@ -31,7 +31,11 @@ class CalculatorView {
           SellerOutcome(
             seller: s,
             result: evaluatePurchase(
-              purchaseInput(settings, rate: parseAmount(s.pricePerMillion)),
+              purchaseInput(
+                settings,
+                rate: parseAmount(s.pricePerMillion),
+                seller: s,
+              ),
             ),
           ),
       ],
@@ -78,6 +82,23 @@ class CalculatorView {
 
   /// Whether the Kina amount is above zero.
   bool get hasAmount => parseMillions(settings.amountMillions) > Decimal.zero;
+
+  /// The cheapest seller by total cost, such as "Cheapest: A · Total € 181.50
+  /// · € 20.00 less than B". Null with one seller.
+  String? get cheapestLine {
+    if (sellers.length < 2) {
+      return null;
+    }
+    final ranked = [...sellers]
+      ..sort((a, b) => a.result.rmt.total.compareTo(b.result.rmt.total));
+    final best = ranked.first;
+    final gap = ranked[1].result.rmt.total - best.result.rmt.total;
+    final tail = gap > Decimal.zero
+        ? ' · ${money(gap)} less than ${ranked[1].seller.name}'
+        : ' · same as ${ranked[1].seller.name}';
+    return 'Cheapest: ${best.seller.name} · '
+        'Total ${money(best.result.rmt.total)}$tail';
+  }
 
   /// The seller row's summary, such as "Total € 181.50 · Save € 201.00".
   String sellerLine(SellerOutcome outcome) {

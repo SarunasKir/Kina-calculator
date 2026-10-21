@@ -54,3 +54,28 @@ from zero, at each displayed step:
 4. Official cost = Quna needed ÷ Quna per pack × pack price, where
    Quna needed = Kina (millions) × Quna per chest ÷ Kina per chest (millions)
 5. Savings = official cost − RMT total
+
+## Seller sites and extra fees
+
+Each seller in the comparison can have a site address and its own fees.
+Open "Site and fees" on a seller row:
+
+- **Extra site fee** (%) and **extra fixed fee** are added to the payment
+  method's fee percent and fixed fee for that seller only. The cheapest seller
+  is the one with the lowest total after these fees.
+- **Site address** with **Fetch price** (per seller) or **Fetch prices** (all
+  sellers) reads the current price and puts it in the seller's price field.
+  Nothing is fetched until you press a button.
+- **Read as**: *Automatic* understands JSON feeds with `price`/`rate`/`cost`
+  fields, prices written with their unit (`€1.25 / 1M`, `$9 per 10M`),
+  schema.org product data (JSON-LD, `itemprop`, `product:price:amount`).
+  *JSON address* follows a path such as `data.items[0].price`. *Page selector*
+  uses a CSS selector such as `.price`.
+- **Price is for** (1M, 10M, 100M, 1B) and **Site currency** tell the app how
+  to turn the site's number into a price per 1M in your calculator currency,
+  using the stored exchange rates. Sync online rates first for other
+  currencies.
+
+Pages that build their prices with JavaScript cannot be read this way; use a
+JSON address if the site offers one. Only fetch from sites whose terms allow
+automated reading.
