@@ -1,0 +1,40 @@
+name: Release
+
+# Push a tag such as v0.2.0 to build the installers and publish them on a
+# GitHub release. See docs/releasing.md.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Package
+    uses: ./.github/workflows/package.yml
+    with:
+      version: ${{ github.ref_name }}
+    secrets: inherit
+
+  publish:
+    name: Publish release
+    needs: package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          mkdir out
+          cp artifacts/kina-calculator-android/app-release.apk "out/KinaCalculator-$version.apk"
+          cp artifacts/kina-calculator-windows/* out/
+          gh release create "$TAG" out/* \
+            --repo "${{ github.repository }}" \
+            --title "Kina Calculator $version" \
+            --generate-notes
