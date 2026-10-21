@@ -34,7 +34,14 @@ jobs:
           mkdir out
           cp artifacts/kina-calculator-android/app-release.apk "out/KinaCalculator-$version.apk"
           cp artifacts/kina-calculator-windows/* out/
-          gh release create "$TAG" out/* \
-            --repo "${{ github.repository }}" \
-            --title "Kina Calculator $version" \
-            --generate-notes
+          # A release made on the GitHub website already exists by now; add the
+          # files to it. Otherwise create it from the tag.
+          if gh release view "$TAG" --repo "${{ github.repository }}" > /dev/null 2>&1; then
+            gh release upload "$TAG" out/* --clobber \
+              --repo "${{ github.repository }}"
+          else
+            gh release create "$TAG" out/* \
+              --repo "${{ github.repository }}" \
+              --title "Kina Calculator $version" \
+              --generate-notes
+          fi
