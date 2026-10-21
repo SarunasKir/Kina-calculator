@@ -18,8 +18,7 @@ class KinaApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     title: 'Kina Calculator',
     debugShowCheckedModeBanner: false,
-    theme: lightTheme,
-    darkTheme: darkTheme,
+    theme: aionTheme,
     home: const HomeShell(),
   );
 }
