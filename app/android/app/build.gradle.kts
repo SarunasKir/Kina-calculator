@@ -15,7 +15,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.sarunaskir.kina_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -29,11 +28,24 @@ android {
         versionName = flutter.versionName
     }
 
+    // Release signing comes from the environment (see docs/releasing.md). With
+    // no key set, the debug key is used so `flutter run --release` still works.
+    val keystorePath = System.getenv("KINA_KEYSTORE_PATH")
+    signingConfigs {
+        if (keystorePath != null) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KINA_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KINA_KEY_ALIAS")
+                keyPassword = System.getenv("KINA_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
+                ?: signingConfigs.getByName("debug")
         }
     }
 }

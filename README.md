@@ -30,8 +30,10 @@ dart analyze --fatal-infos
 (cd app && flutter test)
 ```
 
-Every push builds an Android APK and a Windows app; download them from the
-run's artifacts on the Actions tab.
+Every push builds an Android APK and a Windows installer; download them from
+the run's artifacts on the Actions tab. To publish a release that installs
+without developer tools, push a version tag; see
+[docs/releasing.md](docs/releasing.md).
 
 After changing a table in `packages/kina_data/lib/src/database.dart`,
 regenerate the Drift code with
