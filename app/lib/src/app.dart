@@ -82,10 +82,47 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _index == 0
-              ? 'Kina Calculator'
-              : 'Kina Calculator · ${_destinations[_index].label}',
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Icon(
+              Icons.diamond_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                'KINA CALCULATOR',
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            if (_index != 0) ...[
+              const SizedBox(width: 12),
+              Text(
+                _destinations[_index].label,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ],
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(2),
+          child: Container(
+            height: 2,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
       body: SafeArea(
