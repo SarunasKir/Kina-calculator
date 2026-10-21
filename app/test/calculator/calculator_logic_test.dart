@@ -92,4 +92,67 @@ void main() {
       expect(s.packPrice, cad.packPrice);
     });
   });
+
+  group('sellers', () {
+    test('addSeller copies the last price and stops at the limit', () {
+      final one = addSeller(base);
+      expect(one.sellers.last.name, 'Seller 4');
+      expect(one.sellers.last.pricePerMillion, '2.00');
+      var many = base;
+      for (var i = 0; i < 20; i++) {
+        many = addSeller(many);
+      }
+      expect(many.sellers, hasLength(CalculatorSettings.maxSellers));
+    });
+
+    test('removeSeller keeps at least one', () {
+      expect(removeSeller(base, 1).sellers.map((s) => s.name), [
+        'Seller A',
+        'Seller C',
+      ]);
+      final single = base.copyWith(sellers: [base.sellers.first]);
+      expect(removeSeller(single, 0).sellers, hasLength(1));
+    });
+  });
+
+  group('payment methods', () {
+    test('addPaymentMethod selects the new method and ignores blanks', () {
+      final added = addPaymentMethod(base, '  Wire  ');
+      expect(added.paymentMethods.last.name, 'Wire');
+      expect(added.paymentMethods.last.feePercent, '0');
+      expect(added.selectedPayment, base.paymentMethods.length);
+      expect(addPaymentMethod(base, '  '), same(base));
+      expect(
+        addPaymentMethod(base, 'x' * 50).paymentMethods.last.name,
+        hasLength(maxPaymentNameLength),
+      );
+    });
+
+    test('renamePaymentMethod renames the selected one', () {
+      final renamed = renamePaymentMethod(
+        base.copyWith(selectedPayment: 2),
+        'K',
+      );
+      expect(renamed.paymentMethods[2].name, 'K');
+      expect(renamed.paymentMethods[2].feePercent, '3.9');
+      expect(renamePaymentMethod(base, ' '), same(base));
+    });
+
+    test('removePaymentMethod drops the selected one and keeps one', () {
+      final removed = removePaymentMethod(base.copyWith(selectedPayment: 1));
+      expect(
+        removed.paymentMethods.map((m) => m.name),
+        isNot(contains('Google Pay')),
+      );
+      expect(removed.selectedPayment, 0);
+      final single = base.copyWith(paymentMethods: [base.paymentMethods.first]);
+      expect(removePaymentMethod(single), same(single));
+    });
+
+    test('selectedIndex falls back to the first method', () {
+      expect(selectedIndex(base.copyWith(selectedPayment: 99)), 0);
+      expect(selectedIndex(base.copyWith(selectedPayment: -1)), 0);
+      expect(selectedIndex(base.copyWith(selectedPayment: 2)), 2);
+    });
+  });
 }

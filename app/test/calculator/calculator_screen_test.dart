@@ -153,6 +153,28 @@ void main() {
     );
   });
 
+  testWidgets('sync brings in every currency the ECB publishes', (
+    tester,
+  ) async {
+    final client = FrankfurterClient(
+      client: MockClient(
+        (_) async => http.Response(
+          '{"date":"2026-10-20",'
+          '"rates":{"USD":1.2,"GBP":0.9,"CAD":1.5,"AUD":1.6,"JPY":160}}',
+          200,
+        ),
+      ),
+    );
+    await pumpApp(tester, db, rateClient: client);
+    await tester.tap(find.byKey(const Key('syncRates')));
+    await settle(tester);
+    final rates = (await saved(tester)).ratesPerEur;
+    expect(rates.keys, containsAll(['EUR', 'USD', 'JPY']));
+    await tester.tap(find.byKey(const Key('currency')));
+    await tester.pumpAndSettle();
+    expect(find.text('JPY Japanese Yen'), findsOneWidget);
+  });
+
   testWidgets('sync failure keeps rates', (tester) async {
     final client = FrankfurterClient(
       client: MockClient((_) async => http.Response('', 500)),
@@ -233,5 +255,95 @@ void main() {
     expect(find.textContaining('450000'), findsWidgets);
     await enter(tester, const Key('amount'), '1.2.3m');
     expect(find.text('Use a number such as 300 or 1.5b'), findsOneWidget);
+  });
+
+  testWidgets('sellers can be added and removed between 1 and 10', (
+    tester,
+  ) async {
+    await pumpApp(tester, db, size: const Size(1440, 2400));
+    final add = find.byKey(const Key('addSeller'));
+    await tester.tap(add);
+    await settle(tester);
+    expect((await saved(tester)).sellers.map((s) => s.name), [
+      'Seller A',
+      'Seller B',
+      'Seller C',
+      'Seller 4',
+    ]);
+    expect(find.byKey(const Key('sellerName3')), findsOneWidget);
+
+    for (var i = 0; i < 6; i++) {
+      await tester.tap(add);
+      await settle(tester);
+    }
+    expect((await saved(tester)).sellers, hasLength(10));
+    expect(tester.widget<OutlinedButton>(add).onPressed, isNull);
+
+    for (var i = 9; i > 0; i--) {
+      await tester.tap(find.byKey(Key('removeSeller$i')));
+      await settle(tester);
+    }
+    expect((await saved(tester)).sellers.map((s) => s.name), ['Seller A']);
+    final last = tester.widget<IconButton>(
+      find.byKey(const Key('removeSeller0')),
+    );
+    expect(last.onPressed, isNull);
+  });
+
+  testWidgets('payment methods can be added, renamed and removed', (
+    tester,
+  ) async {
+    await pumpApp(tester, db, size: const Size(1440, 1400));
+    Future<void> name(String text) async {
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('paymentName')), text);
+      await tester.tap(find.byKey(const Key('savePaymentName')));
+      await settle(tester);
+    }
+
+    await tester.tap(find.byKey(const Key('addPayment')));
+    await name('Bank transfer');
+    var settings = await saved(tester);
+    expect(settings.paymentMethods, hasLength(9));
+    expect(settings.payment.name, 'Bank transfer');
+    expect(settings.payment.feePercent, '0');
+
+    await enter(tester, const Key('feePercent'), '1.5');
+    await tester.tap(find.byKey(const Key('renamePayment')));
+    await name('  Wire  ');
+    settings = await saved(tester);
+    expect(settings.payment.name, 'Wire');
+    expect(settings.payment.feePercent, '1.5');
+
+    await tester.tap(find.byKey(const Key('addPayment')));
+    await name('   ');
+    expect((await saved(tester)).paymentMethods, hasLength(9));
+
+    await tester.tap(find.byKey(const Key('addPayment')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await settle(tester);
+    expect((await saved(tester)).paymentMethods, hasLength(9));
+
+    await tester.tap(find.byKey(const Key('removePayment')));
+    await settle(tester);
+    settings = await saved(tester);
+    expect(settings.paymentMethods, hasLength(8));
+    expect(settings.payment.name, 'Visa / Mastercard');
+  });
+
+  testWidgets('the last payment method cannot be removed', (tester) async {
+    await tester.runAsync(
+      () => SettingsRepository(db).save(
+        CalculatorSettings.defaults.copyWith(
+          paymentMethods: [CalculatorSettings.defaults.paymentMethods.first],
+        ),
+      ),
+    );
+    await pumpApp(tester, db);
+    final remove = tester.widget<TextButton>(
+      find.byKey(const Key('removePayment')),
+    );
+    expect(remove.onPressed, isNull);
   });
 }

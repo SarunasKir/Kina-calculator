@@ -42,14 +42,18 @@ class FrankfurterClient {
 
   final http.Client _client;
 
-  /// Returns the latest rates for [codes] against EUR.
+  /// Returns the latest rates for [codes] against EUR, or for every currency
+  /// the ECB publishes when [codes] is empty.
   ///
   /// Throws [RateSyncException] on a network error, a non-200 reply, or a
   /// reply that is missing a rate or the date.
-  Future<PublishedRates> latest(List<String> codes) async {
+  Future<PublishedRates> latest([List<String> codes = const []]) async {
     final wanted = codes.where((c) => c != 'EUR').toList();
     final uri = endpoint.replace(
-      queryParameters: {'base': 'EUR', 'symbols': wanted.join(',')},
+      queryParameters: {
+        'base': 'EUR',
+        if (wanted.isNotEmpty) 'symbols': wanted.join(','),
+      },
     );
     final http.Response response;
     try {
@@ -75,7 +79,7 @@ class FrankfurterClient {
     }
     final rates = body['rates']! as Map<String, Object?>;
     final perEur = <String, Decimal>{};
-    for (final code in wanted) {
+    for (final code in wanted.isEmpty ? rates.keys : wanted) {
       final value = rates[code];
       final rate = value is num ? Decimal.tryParse(value.toString()) : null;
       if (rate == null || rate <= Decimal.zero) {

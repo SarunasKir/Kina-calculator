@@ -36,6 +36,17 @@ void main() {
     });
   });
 
+  test('with no codes it asks for, and keeps, every currency', () async {
+    late Uri asked;
+    final rates = await clientReplying(
+      200,
+      '{"date":"2026-10-20","rates":{"USD":1.0823,"JPY":160}}',
+      onRequest: (r) => asked = r.url,
+    ).latest();
+    expect(asked.queryParameters, {'base': 'EUR'});
+    expect(rates.perEur.keys, ['USD', 'JPY']);
+  });
+
   Future<void> expectFailure(FrankfurterClient client, String message) =>
       expectLater(
         client.latest(codes),

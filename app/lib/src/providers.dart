@@ -82,10 +82,13 @@ class SettingsController extends AsyncNotifier<CalculatorSettings> {
   /// Fetches ECB rates and applies them. Throws [RateSyncException] and
   /// leaves the settings unchanged on failure.
   Future<PublishedRates> syncRates() async {
-    final current = state.value;
-    final codes = current?.ratesPerEur.keys.toList() ?? const <String>[];
-    final published = await ref.read(rateClientProvider).latest(codes);
-    await edit((s) => applySyncedRates(s, published.perEur, published.date));
+    final published = await ref.read(rateClientProvider).latest();
+    await edit(
+      (s) => applySyncedRates(s, {
+        ...s.ratesPerEur,
+        ...published.perEur,
+      }, published.date),
+    );
     return published;
   }
 }

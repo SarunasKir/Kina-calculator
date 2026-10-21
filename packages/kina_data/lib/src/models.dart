@@ -28,12 +28,15 @@ class PaymentMethod {
   final String fixedFee;
 
   /// Returns a copy with the given fields replaced.
-  PaymentMethod copyWith({String? feePercent, String? fixedFee}) =>
-      PaymentMethod(
-        name: name,
-        feePercent: feePercent ?? this.feePercent,
-        fixedFee: fixedFee ?? this.fixedFee,
-      );
+  PaymentMethod copyWith({
+    String? name,
+    String? feePercent,
+    String? fixedFee,
+  }) => PaymentMethod(
+    name: name ?? this.name,
+    feePercent: feePercent ?? this.feePercent,
+    fixedFee: fixedFee ?? this.fixedFee,
+  );
 
   /// Converts to JSON.
   Map<String, Object?> toJson() => {
@@ -196,6 +199,12 @@ class CalculatorSettings {
     },
     rateSource: RateSource.saved,
   );
+
+  /// The fewest sellers the comparison table keeps.
+  static const minSellers = 1;
+
+  /// The most sellers the comparison table holds.
+  static const maxSellers = 10;
 
   /// Kina to buy, in millions.
   final String amountMillions;

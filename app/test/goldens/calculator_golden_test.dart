@@ -97,7 +97,7 @@ void main() {
     'Windows',
     (t) => golden(
       t,
-      size: const Size(1440, 1180),
+      size: const Size(1440, 1400),
       pixelRatio: 1,
       name: 'windows_calculator',
     ),

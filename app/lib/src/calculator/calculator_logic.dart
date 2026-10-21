@@ -92,3 +92,83 @@ CalculatorSettings applySyncedRates(
     rateDate: publishedOn,
   );
 }
+
+/// The longest payment method name.
+const maxPaymentNameLength = 30;
+
+/// Index of the selected payment method, or 0 if the stored index is stale.
+int selectedIndex(CalculatorSettings s) =>
+    s.selectedPayment >= 0 && s.selectedPayment < s.paymentMethods.length
+    ? s.selectedPayment
+    : 0;
+
+/// Adds a seller named "Seller N" with the last seller's price, up to the
+/// limit.
+CalculatorSettings addSeller(CalculatorSettings s) {
+  if (s.sellers.length >= CalculatorSettings.maxSellers) {
+    return s;
+  }
+  return s.copyWith(
+    sellers: [
+      ...s.sellers,
+      Seller(
+        name: 'Seller ${s.sellers.length + 1}',
+        pricePerMillion: s.sellers.last.pricePerMillion,
+      ),
+    ],
+  );
+}
+
+/// Removes the seller at [index], keeping at least one.
+CalculatorSettings removeSeller(CalculatorSettings s, int index) {
+  if (s.sellers.length <= CalculatorSettings.minSellers) {
+    return s;
+  }
+  return s.copyWith(sellers: [...s.sellers]..removeAt(index));
+}
+
+String _cleanName(String name) {
+  final trimmed = name.trim();
+  return trimmed.length > maxPaymentNameLength
+      ? trimmed.substring(0, maxPaymentNameLength)
+      : trimmed;
+}
+
+/// Adds a payment method with no fees yet and selects it. A blank name
+/// changes nothing.
+CalculatorSettings addPaymentMethod(CalculatorSettings s, String name) {
+  final clean = _cleanName(name);
+  if (clean.isEmpty) {
+    return s;
+  }
+  return s.copyWith(
+    paymentMethods: [
+      ...s.paymentMethods,
+      PaymentMethod(name: clean, feePercent: '0', fixedFee: '0'),
+    ],
+    selectedPayment: s.paymentMethods.length,
+  );
+}
+
+/// Renames the selected payment method. A blank name changes nothing.
+CalculatorSettings renamePaymentMethod(CalculatorSettings s, String name) {
+  final clean = _cleanName(name);
+  if (clean.isEmpty) {
+    return s;
+  }
+  final methods = [...s.paymentMethods];
+  final i = selectedIndex(s);
+  methods[i] = methods[i].copyWith(name: clean);
+  return s.copyWith(paymentMethods: methods);
+}
+
+/// Removes the selected payment method, keeping at least one.
+CalculatorSettings removePaymentMethod(CalculatorSettings s) {
+  if (s.paymentMethods.length <= 1) {
+    return s;
+  }
+  return s.copyWith(
+    paymentMethods: [...s.paymentMethods]..removeAt(selectedIndex(s)),
+    selectedPayment: 0,
+  );
+}
