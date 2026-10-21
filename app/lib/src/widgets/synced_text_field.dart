@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kina_app/src/format.dart';
 
 /// A text field that shows [value] and reports edits, and also picks up
 /// changes made elsewhere (a currency switch or a reset) without losing what
@@ -13,6 +14,7 @@ class SyncedTextField extends StatefulWidget {
     this.onChanged,
     this.onCommitted,
     this.numeric = true,
+    this.compact = false,
     this.prefix,
     this.suffix,
     this.onInfo,
@@ -33,6 +35,9 @@ class SyncedTextField extends StatefulWidget {
 
   /// Whether to show a number keyboard and allow only digits and separators.
   final bool numeric;
+
+  /// Whether compact notation such as `300m` or `1.5b` is allowed.
+  final bool compact;
 
   /// Text before the input, such as a currency symbol.
   final String? prefix;
@@ -82,28 +87,38 @@ class _SyncedTextFieldState extends State<SyncedTextField> {
   }
 
   @override
-  Widget build(BuildContext context) => TextField(
-    controller: _controller,
-    focusNode: _focus,
-    decoration: InputDecoration(
-      labelText: widget.label,
-      prefixText: widget.prefix == null ? null : '${widget.prefix} ',
-      suffixText: widget.suffix,
-      suffixIcon: widget.onInfo == null
-          ? null
-          : IconButton(
-              icon: const Icon(Icons.info_outline),
-              tooltip: 'About ${widget.label}',
-              onPressed: widget.onInfo,
-            ),
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _controller,
+    builder: (context, _) => TextField(
+      controller: _controller,
+      focusNode: _focus,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        prefixText: widget.prefix == null ? null : '${widget.prefix} ',
+        suffixText: widget.suffix,
+        errorText: widget.numeric
+            ? numberError(_controller.text, compact: widget.compact)
+            : null,
+        suffixIcon: widget.onInfo == null
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.info_outline),
+                tooltip: 'About ${widget.label}',
+                onPressed: widget.onInfo,
+              ),
+      ),
+      keyboardType: widget.numeric
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      inputFormatters: widget.numeric
+          ? [
+              FilteringTextInputFormatter.allow(
+                RegExp(widget.compact ? '[0-9.,kmbKMB]' : '[0-9.,]'),
+              ),
+            ]
+          : null,
+      onChanged: widget.onChanged,
+      onSubmitted: widget.onCommitted,
     ),
-    keyboardType: widget.numeric
-        ? const TextInputType.numberWithOptions(decimal: true)
-        : TextInputType.text,
-    inputFormatters: widget.numeric
-        ? [FilteringTextInputFormatter.allow(RegExp('[0-9.,]'))]
-        : null,
-    onChanged: widget.onChanged,
-    onSubmitted: widget.onCommitted,
   );
 }

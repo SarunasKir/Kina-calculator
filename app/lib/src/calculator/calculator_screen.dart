@@ -130,6 +130,7 @@ class _Inputs extends ConsumerWidget {
               first: SyncedTextField(
                 key: const Key('amount'),
                 label: 'Kina (millions)',
+                compact: true,
                 value: s.amountMillions,
                 onChanged: (v) => edit((s) => s.copyWith(amountMillions: v)),
               ),

@@ -7,14 +7,17 @@ class KinaFormatException extends FormatException {
 }
 
 final Decimal _maxKina = Decimal.parse('1e15');
+final RegExp _thousandsGroup = RegExp(r'^[1-9]\d{0,2}[.,]\d{3}$');
 final RegExp _plainNumber = RegExp(r'^\d+(\.\d+)?$|^\.\d+$|^\d+\.$');
 
 /// Parses a Kina amount such as `25m`, `750k`, `1.5b`, `1,250,000` or
 /// `1.250.000` into raw Kina.
 ///
-/// Matches v55: a single comma is a decimal separator (`1,5m`), and two or
-/// more separators in groups of three are thousands separators. Negative
-/// numbers, scientific notation and values above 10^15 are rejected.
+/// A single comma is a decimal separator next to a suffix (`1,5m`), but with
+/// no suffix a single separator followed by exactly three digits is a
+/// thousands separator (`1,250` and `1.250` are both 1250). Two or more
+/// separators in groups of three are thousands separators. Negative numbers,
+/// scientific notation and values above 10^15 are rejected.
 Decimal parseKina(String text) {
   var s = text.trim().toLowerCase().replaceAll(' ', '');
   if (s.isEmpty) {
@@ -30,7 +33,9 @@ Decimal parseKina(String text) {
 
   final commas = ','.allMatches(s).length;
   final dots = '.'.allMatches(s).length;
-  if (commas >= 2 && dots == 0) {
+  if (suffix == null && commas + dots == 1 && _thousandsGroup.hasMatch(s)) {
+    s = s.replaceAll(RegExp('[.,]'), '');
+  } else if (commas >= 2 && dots == 0) {
     s = _ungroup(s, ',');
   } else if (dots >= 2 && commas == 0) {
     s = _ungroup(s, '.');

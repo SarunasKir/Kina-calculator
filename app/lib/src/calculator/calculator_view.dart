@@ -77,7 +77,7 @@ class CalculatorView {
   }
 
   /// Whether the Kina amount is above zero.
-  bool get hasAmount => parseAmount(settings.amountMillions) > Decimal.zero;
+  bool get hasAmount => parseMillions(settings.amountMillions) > Decimal.zero;
 
   /// The seller row's summary, such as "Total € 181.50 · Save € 201.00".
   String sellerLine(SellerOutcome outcome) {
