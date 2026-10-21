@@ -1,0 +1,4 @@
+[
+  {"Name": "Weekend offer", "Updated": "2026-10-01 18:30", "Data": {"Amount": "500", "Price": "0.95", "Payment": 0, "Currency": 0, "FXTarget": 1}},
+  {"Name": "EU marketplace", "Updated": "2026-10-02 09:15", "Data": {"Amount": "100", "RateMode": "Manual override", "SyncDate": "2026-09-30"}}
+]

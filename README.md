@@ -9,11 +9,11 @@ payment fees. It is a rebuild of the v55 Windows app for Windows and Android.
 | Path | What it holds |
 | --- | --- |
 | `packages/kina_core` | Calculations, Kina price parser and currency maths (pure Dart) |
+| `packages/kina_data` | SQLite storage (Drift) for settings, profiles, price history and the purchase journal, plus v55 import |
 | `docs/` | Architecture decision records |
 | `tool/` | Scripts used by CI |
 
-The Flutter app, local storage and Wi-Fi sync will be added in later pull
-requests.
+The Flutter app and Wi-Fi sync will be added in later pull requests.
 
 ## Development
 
@@ -24,11 +24,16 @@ Install the [Flutter SDK](https://docs.flutter.dev/get-started/install)
 dart pub get
 dart format .
 dart analyze --fatal-infos
-cd packages/kina_core && dart test
+(cd packages/kina_core && dart test)
+(cd packages/kina_data && dart test)
 ```
 
+After changing a table in `packages/kina_data/lib/src/database.dart`,
+regenerate the Drift code with
+`cd packages/kina_data && dart run build_runner build`.
+
 CI runs formatting, analysis and tests on every push and pull request, and
-requires 100% line coverage for `kina_core`.
+requires 100% line coverage for both packages (generated code excluded).
 
 ## Calculation rules
 

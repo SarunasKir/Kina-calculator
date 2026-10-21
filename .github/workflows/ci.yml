@@ -17,14 +17,23 @@ jobs:
           flutter-version: 3.47.7
           cache: true
       - run: dart pub get
+      - name: Check generated code is up to date
+        working-directory: packages/kina_data
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          git diff --exit-code -- .
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
       - name: Analyze
         run: dart analyze --fatal-infos
-      - name: Test with coverage
+      - run: dart pub global activate coverage
+      - name: Test kina_core
         working-directory: packages/kina_core
+        run: dart pub global run coverage:test_with_coverage
+      - name: Test kina_data
+        working-directory: packages/kina_data
+        run: dart pub global run coverage:test_with_coverage
+      - name: Require 100% line coverage
         run: |
-          dart pub global activate coverage
-          dart pub global run coverage:test_with_coverage
-      - name: Require 100% line coverage for kina_core
-        run: tool/check_coverage.sh packages/kina_core/coverage/lcov.info 100
+          tool/check_coverage.sh packages/kina_core/coverage/lcov.info 100
+          tool/check_coverage.sh packages/kina_data/coverage/lcov.info 100

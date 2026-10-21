@@ -1,0 +1,4 @@
+[
+  {"date": "2026-10-05T20:11:00+02:00", "item": "Ancient sword", "kina": 25000000, "quna_equivalent": 7500, "official_eur": 95.63, "rmt_eur": 37.5, "currency": "EUR", "fx_rate_per_eur": 1},
+  {"date": "2026-10-06T21:00:00+02:00", "item": "", "kina": 750000, "quna_equivalent": 225, "official_eur": 2.87, "rmt_eur": 1.13, "currency": "USD", "fx_rate_per_eur": 1.0823}
+]
